@@ -18,6 +18,7 @@ package helm
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -216,10 +217,10 @@ func (m *Manager) RunTemplate(opts ...Option) error {
 // RunUpgrade provides a way to invoke the `helm upgrade` sub commands that can be
 // used to perform the chart upgrade operation tests. This can be combined with suitable
 // arguments to even install the charts if they are not already existing in the cluster.
-func (m *Manager) RunUpgrade(opts ...Option) error {
+func (m *Manager) RunUpgrade(ctx context.Context, opts ...Option) error {
 	o := m.processOpts(opts...)
 	o.mode = "upgrade"
-	return m.run(o)
+	return m.run(ctx, o)
 }
 
 // RunTest provides a way to perform the `helm test` sub command that can be leveraged
@@ -232,7 +233,7 @@ func (m *Manager) RunTest(opts ...Option) error {
 
 // run method is used to invoke a helm command to perform a suitable operation.
 // Please make sure to configure the right Opts using the Option helpers
-func (m *Manager) run(opts *Opts) (err error) {
+func (m *Manager) run(ctx context.Context, opts *Opts) (err error) {
 	if m.path == "" {
 		m.path = "helm"
 	}
@@ -246,7 +247,7 @@ func (m *Manager) run(opts *Opts) (err error) {
 		return
 	}
 	log.V(4).InfoS("Running Helm Operation", "command", command)
-	proc := m.e.NewProc(command)
+	proc := m.e.NewProcWithContext(ctx, command)
 
 	var stderr bytes.Buffer
 	proc.SetStderr(&stderr)
